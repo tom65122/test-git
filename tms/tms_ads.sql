@@ -359,15 +359,15 @@ from (select '20250717'        dt,
                city_name,
                recent_days) city_order_nd
          full outer join
-     (select '20250717'                                           dt,
+     (select '20250717'                                             dt,
              city_id,
              city_name,
              recent_days,
-             sum(trans_finish_count)                              trans_finish_count,
-             sum(trans_finish_distance)                           trans_finish_distance,
-             sum(trans_finish_dur_sec)                            trans_finish_dur_sec,
-             sum(trans_finish_distance) / sum(trans_finish_count) avg_trans_finish_distance,
-             sum(trans_finish_dur_sec) / sum(trans_finish_count)  avg_trans_finish_dur_sec
+             sum(trans_finish_count)                                trans_finish_count,
+             sum(trans_finish_distance)                             trans_finish_distance,
+             sum(trans_finish_dur_sec)                              trans_finish_dur_sec,
+             sum(trans_finish_distance) / sum(trans_finish_count)   avg_trans_finish_distance,
+             sum(trans_finish_dur_sec) / sum(trans_finish_count)    avg_trans_finish_dur_sec
       from dws_trans_shift_trans_finish_nd
       where dt = '20250717'
       group by city_id,
@@ -617,9 +617,9 @@ select '20250717'                                           dt,
        recent_days,
        driver_id,
        driver_name,
-       sum(trans_finish_count)                              trans_finish_count,
-       sum(trans_finish_distance)                           trans_finish_distance,
-       sum(trans_finish_dur_sec)                            trans_finish_dur_sec,
+       sum(trans_finish_count)          trans_finish_count,
+       sum(trans_finish_distance)       trans_finish_distance,
+       sum(trans_finish_dur_sec)        trans_finish_dur_sec,
        sum(trans_finish_distance) / sum(trans_finish_count) avg_trans_finish_distance,
        sum(trans_finish_dur_sec) / sum(trans_finish_count)  avg_trans_finish_dur_sec
 from (select recent_days,
