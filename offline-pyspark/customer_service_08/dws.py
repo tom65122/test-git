@@ -101,7 +101,7 @@ dws_performance_summary_df = dwd_performance_df.join(
 print_data_count(dws_performance_summary_df, "dws_customer_service_performance_summary")
 
 dws_performance_summary_df.withColumn("dt", F.lit("20250801")) \
-    .write.mode("overwrite") \
+    .write.mode("append") \
     .partitionBy("dt") \
     .orc("/warehouse/customer/dws/dws_customer_service_performance_summary")
 
@@ -198,7 +198,7 @@ dws_activity_summary_df = dim_activity_df.select(
 print_data_count(dws_activity_summary_df, "dws_coupon_activity_effect_summary")
 
 dws_activity_summary_df.withColumn("dt", F.lit("20250801")) \
-    .write.mode("overwrite") \
+    .write.mode("append") \
     .partitionBy("dt") \
     .orc("/warehouse/customer/dws/dws_coupon_activity_effect_summary")
 
@@ -293,7 +293,7 @@ dws_product_analysis_df = dwd_product_df.select(
 print_data_count(dws_product_analysis_df, "dws_product_coupon_analysis")
 
 dws_product_analysis_df.withColumn("dt", F.lit("20250801")) \
-    .write.mode("overwrite") \
+    .write.mode("append") \
     .partitionBy("dt") \
     .orc("/warehouse/customer/dws/dws_product_coupon_analysis")
 

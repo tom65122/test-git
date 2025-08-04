@@ -92,7 +92,7 @@ dwd_send_df = ods_send_df \
 print_data_count(dwd_send_df, "dwd_coupon_send_fact")
 
 dwd_send_df.withColumn("dt", F.lit("20250801")) \
-    .write.mode("overwrite") \
+    .write.mode("append") \
     .partitionBy("dt") \
     .orc("/warehouse/customer/dwd/dwd_coupon_send_fact")
 
@@ -156,7 +156,7 @@ dwd_usage_df = ods_usage_df \
 print_data_count(dwd_usage_df, "dwd_coupon_usage_fact")
 
 dwd_usage_df.withColumn("dt", F.lit("20250801")) \
-    .write.mode("overwrite") \
+    .write.mode("append") \
     .partitionBy("dt") \
     .orc("/warehouse/customer/dwd/dwd_coupon_usage_fact")
 
@@ -211,7 +211,7 @@ dwd_product_df = ods_product_df \
 print_data_count(dwd_product_df, "dwd_activity_product_fact")
 
 dwd_product_df.withColumn("dt", F.lit("20250801")) \
-    .write.mode("overwrite") \
+    .write.mode("append") \
     .partitionBy("dt") \
     .orc("/warehouse/customer/dwd/dwd_activity_product_fact")
 
@@ -292,7 +292,7 @@ dwd_performance_df = customer_service_dim \
 print_data_count(dwd_performance_df, "dwd_customer_service_performance")
 
 dwd_performance_df.withColumn("dt", F.lit("20250801")) \
-    .write.mode("overwrite") \
+    .write.mode("append") \
     .partitionBy("dt") \
     .orc("/warehouse/customer/dwd/dwd_customer_service_performance")
 

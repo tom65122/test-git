@@ -100,7 +100,7 @@ ads_activity_daily_stats_df = dws_activity_summary_df.select(
 
 print_data_count(ads_activity_daily_stats_df, "ads_activity_daily_stats")
 
-ads_activity_daily_stats_df.write.mode("overwrite").orc("/warehouse/customer/ads/ads_activity_daily_stats")
+ads_activity_daily_stats_df.write.mode("append").orc("/warehouse/customer/ads/ads_activity_daily_stats")
 repair_hive_table("ads_activity_daily_stats")
 
 # ====================== 2. 客服优惠发送与核销统计表 ads_customer_service_coupon_stats ======================
@@ -158,7 +158,7 @@ ads_customer_service_stats_df = dws_performance_summary_df.select(
 
 print_data_count(ads_customer_service_stats_df, "ads_customer_service_coupon_stats")
 
-ads_customer_service_stats_df.write.mode("overwrite").orc("/warehouse/customer/ads/ads_customer_service_coupon_stats")
+ads_customer_service_stats_df.write.mode("append").orc("/warehouse/customer/ads/ads_customer_service_coupon_stats")
 repair_hive_table("ads_customer_service_coupon_stats")
 
 # ====================== 3. 优惠发送与核销明细表 ads_coupon_send_usage_detail ======================
@@ -232,7 +232,7 @@ ads_coupon_detail_df = dwd_send_df.join(
 
 print_data_count(ads_coupon_detail_df, "ads_coupon_send_usage_detail")
 
-ads_coupon_detail_df.write.mode("overwrite").orc("/warehouse/customer/ads/ads_coupon_send_usage_detail")
+ads_coupon_detail_df.write.mode("append").orc("/warehouse/customer/ads/ads_coupon_send_usage_detail")
 repair_hive_table("ads_coupon_send_usage_detail")
 
 # ====================== 4. 时间周期汇总统计表 ads_time_period_summary ======================
@@ -292,7 +292,7 @@ ads_time_period_summary_df = spark.createDataFrame([
 
 print_data_count(ads_time_period_summary_df, "ads_time_period_summary")
 
-ads_time_period_summary_df.write.mode("overwrite").orc("/warehouse/customer/ads/ads_time_period_summary")
+ads_time_period_summary_df.write.mode("append").orc("/warehouse/customer/ads/ads_time_period_summary")
 repair_hive_table("ads_time_period_summary")
 
 # ====================== 5. 各客服发送优惠数量表 ads_customer_service_send_stats ======================
@@ -334,7 +334,7 @@ ads_customer_service_send_stats_df = dws_performance_summary_df.select(
 
 print_data_count(ads_customer_service_send_stats_df, "ads_customer_service_send_stats")
 
-ads_customer_service_send_stats_df.write.mode("overwrite").orc("/warehouse/customer/ads/ads_customer_service_send_stats")
+ads_customer_service_send_stats_df.write.mode("append").orc("/warehouse/customer/ads/ads_customer_service_send_stats")
 repair_hive_table("ads_customer_service_send_stats")
 
 # ====================== 6. 各客服发送优惠被核销数量表 ads_customer_service_usage_stats ======================
@@ -376,7 +376,7 @@ ads_customer_service_usage_stats_df = dws_performance_summary_df.select(
 
 print_data_count(ads_customer_service_usage_stats_df, "ads_customer_service_usage_stats")
 
-ads_customer_service_usage_stats_df.write.mode("overwrite").orc("/warehouse/customer/ads/ads_customer_service_usage_stats")
+ads_customer_service_usage_stats_df.write.mode("append").orc("/warehouse/customer/ads/ads_customer_service_usage_stats")
 repair_hive_table("ads_customer_service_usage_stats")
 
 spark.stop()

@@ -82,7 +82,7 @@ dim_customer_service_df = customer_service_info \
 print_data_count(dim_customer_service_df, "dim_customer_service_full")
 
 dim_customer_service_df.withColumn("dt", F.lit("20250801")) \
-    .write.mode("overwrite") \
+    .write.mode("append") \
     .partitionBy("dt") \
     .orc("/warehouse/default/dim/dim_customer_service_full")
 
@@ -148,7 +148,7 @@ dim_activity_df = ods_activity_df \
 print_data_count(dim_activity_df, "dim_activity_full")
 
 dim_activity_df.withColumn("dt", F.lit("20250801")) \
-    .write.mode("overwrite") \
+    .write.mode("append") \
     .partitionBy("dt") \
     .orc("/warehouse/default/dim/dim_activity_full")
 
@@ -181,7 +181,7 @@ dim_customer_df = spark.table("ods_customer_info").filter(
 print_data_count(dim_customer_df, "dim_customer_full")
 
 dim_customer_df.withColumn("dt", F.lit("20250801")) \
-    .write.mode("overwrite") \
+    .write.mode("append") \
     .partitionBy("dt") \
     .orc("/warehouse/default/dim/dim_customer_full")
 
