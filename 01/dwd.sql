@@ -1,5 +1,5 @@
 use traffic;
-SET hivevar:do_date=2025-08-01;
+SET hivevar:do_date=2025-08-05;
 -- 创建页面日志表
 drop table if exists dwd_page_log;
 CREATE EXTERNAL TABLE dwd_page_log
@@ -16,7 +16,7 @@ CREATE EXTERNAL TABLE dwd_page_log
     STORED AS ORC
     LOCATION '/warehouse/traffic/dwd/dwd_page_log/';
 -- 数据装载
-INSERT OVERWRITE TABLE dwd_page_log PARTITION (dt = '${do_date}')
+INSERT into TABLE dwd_page_log PARTITION (dt = '${do_date}')
 SELECT
     common.uid AS user_id,
     page.item AS sku_id,
@@ -48,7 +48,7 @@ CREATE EXTERNAL TABLE dwd_trade_cart_add_inc
     LOCATION '/warehouse/traffic/dwd/dwd_trade_cart_add_inc/';
 
 -- 数据装载
-INSERT OVERWRITE TABLE dwd_trade_cart_add_inc PARTITION (dt = '${do_date}')
+INSERT into TABLE dwd_trade_cart_add_inc PARTITION (dt = '${do_date}')
 SELECT
     data.user_id AS user_id,
     data.sku_id AS sku_id,
@@ -63,6 +63,7 @@ WHERE dt = '${do_date}'
   AND type = 'insert';
 
 -- 创建订单明细事实表
+drop table if exists dwd_trade_order_detail_inc;
 CREATE EXTERNAL TABLE dwd_trade_order_detail_inc
 (
     `user_id`            STRING COMMENT '用户id',
@@ -81,7 +82,7 @@ CREATE EXTERNAL TABLE dwd_trade_order_detail_inc
     LOCATION '/warehouse/traffic/dwd/dwd_trade_order_detail_inc/';
 
 -- 数据装载
-INSERT OVERWRITE TABLE dwd_trade_order_detail_inc PARTITION (dt = '${do_date}')
+INSERT into TABLE dwd_trade_order_detail_inc PARTITION (dt = '${do_date}')
 SELECT
     data.user_id AS user_id,
     data.order_id AS order_id,
@@ -99,6 +100,7 @@ WHERE dt = '${do_date}'
 
 
 -- 创建支付成功事实表
+drop table if exists dwd_trade_pay_suc_detail_inc;
 CREATE EXTERNAL TABLE dwd_trade_pay_suc_detail_inc
 (
     `user_id`              STRING COMMENT '用户id',
@@ -115,9 +117,8 @@ CREATE EXTERNAL TABLE dwd_trade_pay_suc_detail_inc
     LOCATION '/warehouse/traffic/dwd/dwd_trade_pay_suc_detail_inc/';
 
 -- 数据装载
--- 数据装载（关联版本）
 -- 数据装载（兼容版本）
-INSERT OVERWRITE TABLE dwd_trade_pay_suc_detail_inc PARTITION (dt = '${do_date}')
+INSERT into TABLE dwd_trade_pay_suc_detail_inc PARTITION (dt = '${do_date}')
 SELECT
     p.data.user_id AS user_id,
     p.data.order_id AS order_id,

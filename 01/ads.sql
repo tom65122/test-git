@@ -1,4 +1,10 @@
+use traffic;
+
+SET hivevar:do_date=2025-08-05;
+
+
 -- 创建商品效率统计表
+drop table if exists ads_product_efficiency_stat;
 CREATE EXTERNAL TABLE ads_product_efficiency_stat
 (
     -- 统计维度
@@ -34,52 +40,52 @@ CREATE EXTERNAL TABLE ads_product_efficiency_stat
 ) COMMENT '商品效率统计表'
     PARTITIONED BY (dt STRING)
     STORED AS ORC
-    LOCATION '/warehouse/电商数仓/ads/ads_product_efficiency_stat/';
+    LOCATION '/warehouse/traffic/ads/ads_product_efficiency_stat/';
 
 -- 数据装载
-INSERT OVERWRITE TABLE ads_product_efficiency_stat PARTITION (dt = '${do_date}')
+INSERT into TABLE ads_product_efficiency_stat PARTITION (dt = '${do_date}')
 SELECT
     -- 统计维度
-    '${do_date}'                                                                                     AS stat_date,
-    date_format('${do_date}', 'yyyy-ww')                                                             AS stat_week,
-    date_format('${do_date}', 'yyyy-MM')                                                             AS stat_month,
-    year('${do_date}')                                                                               AS stat_year,
+    '${do_date}'                                                      AS stat_date,
+    date_format('${do_date}', 'yyyy-ww')                              AS stat_week,
+    date_format('${do_date}', 'yyyy-MM')                              AS stat_month,
+    year('${do_date}')                                                AS stat_year,
 
     -- 访问相关指标
-    SUM(pv.view_user_count_1d)                                                                       AS product_visitor_count,
-    SUM(pv.view_count_1d)                                                                            AS product_view_count,
-    COUNT(CASE WHEN pv.view_count_1d > 0 THEN 1 END)                                                 AS visited_product_count,
-    CAST(AVG(pv.avg_stay_time_1d) / 1000.0 AS DECIMAL(16, 2))                                        AS avg_stay_time,
+    SUM(pv.view_user_count_1d)                                        AS product_visitor_count,
+    SUM(pv.view_count_1d)                                             AS product_view_count,
+    COUNT(CASE WHEN pv.view_count_1d > 0 THEN 1 END)                  AS visited_product_count,
+    CAST(AVG(pv.avg_stay_time_1d) / 1000.0 AS DECIMAL(16, 2))         AS avg_stay_time,
 
     -- 加购相关指标
-    SUM(cart.cart_add_num_1d)                                                                        AS cart_add_num,
-    SUM(cart.cart_add_user_count_1d)                                                                 AS cart_add_user_count,
+    SUM(cart.cart_add_num_1d)                                                                      AS cart_add_num,
+    SUM(cart.cart_add_user_count_1d)                                                               AS cart_add_user_count,
     CAST(SUM(cart.cart_add_user_count_1d) /
-         NULLIF(SUM(pv.view_user_count_1d), 0) AS DECIMAL(16, 4))                                    AS cart_conversion_rate,
+         NULLIF(SUM(pv.view_user_count_1d), 0) AS DECIMAL(16, 4))                                  AS cart_conversion_rate,
 
     -- 订单相关指标
-    SUM(ord.order_user_count_1d)                                                                     AS order_user_count,
-    SUM(ord.order_num_1d)                                                                            AS order_num,
-    SUM(ord.order_amount_1d)                                                                         AS order_amount,
+    SUM(ord.order_user_count_1d)                                                                   AS order_user_count,
+    SUM(ord.order_num_1d)                                                                          AS order_num,
+    SUM(ord.order_amount_1d)                                                                       AS order_amount,
     CAST(SUM(ord.order_user_count_1d) /
-         NULLIF(SUM(pv.view_user_count_1d), 0) AS DECIMAL(16, 4))                                    AS order_conversion_rate,
+         NULLIF(SUM(pv.view_user_count_1d), 0) AS DECIMAL(16, 4))                                  AS order_conversion_rate,
 
     -- 支付相关指标
-    SUM(pay.payment_user_count_1d)                                                                   AS payment_user_count,
-    SUM(pay.payment_num_1d)                                                                          AS payment_num,
-    SUM(pay.payment_amount_1d)                                                                       AS payment_amount,
-    COUNT(CASE WHEN pay.payment_amount_1d > 0 THEN 1 END)                                            AS paid_product_count,
+    SUM(pay.payment_user_count_1d)                                                                 AS payment_user_count,
+    SUM(pay.payment_num_1d)                                                                        AS payment_num,
+    SUM(pay.payment_amount_1d)                                                                     AS payment_amount,
+    COUNT(CASE WHEN pay.payment_amount_1d > 0 THEN 1 END)                                          AS paid_product_count,
     CAST(SUM(pay.payment_user_count_1d) /
-         NULLIF(SUM(pv.view_user_count_1d), 0) AS DECIMAL(16, 4))                                    AS payment_conversion_rate,
-    CAST(SUM(pay.payment_amount_1d) / NULLIF(SUM(pay.payment_user_count_1d), 0) AS DECIMAL(16, 2))   AS customer_price
+         NULLIF(SUM(pv.view_user_count_1d), 0) AS DECIMAL(16, 4))                                  AS payment_conversion_rate,
+    CAST(SUM(pay.payment_amount_1d) / NULLIF(SUM(pay.payment_user_count_1d), 0) AS DECIMAL(16, 2)) AS customer_price
 
 FROM (SELECT * FROM dws_product_page_view_1d WHERE dt = '${do_date}') pv
          FULL OUTER JOIN
-         (SELECT * FROM dws_product_cart_add_1d WHERE dt = '${do_date}') cart ON pv.sku_id = cart.sku_id
+     (SELECT * FROM dws_product_cart_add_1d WHERE dt = '${do_date}') cart ON pv.sku_id = cart.sku_id
          FULL OUTER JOIN
-         (SELECT * FROM dws_product_order_1d WHERE dt = '${do_date}') ord ON pv.sku_id = ord.sku_id
+     (SELECT * FROM dws_product_order_1d WHERE dt = '${do_date}') ord ON pv.sku_id = ord.sku_id
          FULL OUTER JOIN
-         (SELECT * FROM dws_product_payment_1d WHERE dt = '${do_date}') pay ON pv.sku_id = pay.sku_id
+     (SELECT * FROM dws_product_payment_1d WHERE dt = '${do_date}') pay ON pv.sku_id = pay.sku_id
 GROUP BY '${do_date}',
          date_format('${do_date}', 'yyyy-ww'),
          date_format('${do_date}', 'yyyy-MM'),
@@ -87,6 +93,7 @@ GROUP BY '${do_date}',
 
 
 -- 创建商品区间分析表
+drop table if exists ads_product_range_analysis;
 CREATE EXTERNAL TABLE ads_product_range_analysis
 (
     -- 统计维度
@@ -104,16 +111,16 @@ CREATE EXTERNAL TABLE ads_product_range_analysis
 ) COMMENT '商品区间分析表'
     PARTITIONED BY (dt STRING)
     STORED AS ORC
-    LOCATION '/warehouse/电商数仓/ads/ads_product_range_analysis/';
+    LOCATION '/warehouse/traffic/ads/ads_product_range_analysis/';
 
 -- 按价格区间分析数据装载
-INSERT OVERWRITE TABLE ads_product_range_analysis PARTITION (dt = '${do_date}')
+INSERT into TABLE ads_product_range_analysis PARTITION (dt = '${do_date}')
 SELECT
     -- 统计维度
-    '${do_date}'                                                                                                      AS stat_date,
-    date_format('${do_date}', 'yyyy-ww')                                                                              AS stat_week,
-    date_format('${do_date}', 'yyyy-MM')                                                                              AS stat_month,
-    'price_range'                                                                                                     AS range_type,
+    '${do_date}'                                   AS stat_date,
+    date_format('${do_date}', 'yyyy-ww')           AS stat_week,
+    date_format('${do_date}', 'yyyy-MM')           AS stat_month,
+    'price_range'                                  AS range_type,
     CASE
         WHEN sku.price <= 50 THEN '0-50'
         WHEN sku.price > 50 AND sku.price <= 100 THEN '51-100'
@@ -121,17 +128,17 @@ SELECT
         WHEN sku.price > 150 AND sku.price <= 300 THEN '151-300'
         WHEN sku.price > 300 THEN '300+'
         ELSE '其他'
-        END                                                                                                           AS range_value,
+        END                                                                 AS range_value,
 
     -- 分析指标
-    COUNT(DISTINCT sku.id)                                                                                            AS active_product_count,
-    SUM(COALESCE(pay.payment_amount_1d, 0))                                                                           AS payment_amount,
-    SUM(COALESCE(pay.payment_num_1d, 0))                                                                              AS payment_num,
+    COUNT(DISTINCT sku.id)                                                  AS active_product_count,
+    SUM(COALESCE(pay.payment_amount_1d, 0))                                 AS payment_amount,
+    SUM(COALESCE(pay.payment_num_1d, 0))                                    AS payment_num,
     CAST(SUM(COALESCE(pay.payment_amount_1d, 0)) /
-         NULLIF(SUM(COALESCE(pay.payment_num_1d, 0)), 0) AS DECIMAL(16, 2))                                           AS avg_price
+         NULLIF(SUM(COALESCE(pay.payment_num_1d, 0)), 0) AS DECIMAL(16, 2)) AS avg_price
 FROM (SELECT * FROM ods_sku_info_full WHERE dt = '${do_date}') sku
          LEFT JOIN
-         (SELECT * FROM dws_product_payment_1d WHERE dt = '${do_date}') pay ON sku.id = pay.sku_id
+     (SELECT * FROM dws_product_payment_1d WHERE dt = '${do_date}') pay ON sku.id = pay.sku_id
 GROUP BY CASE
              WHEN sku.price <= 50 THEN '0-50'
              WHEN sku.price > 50 AND sku.price <= 100 THEN '51-100'
@@ -202,7 +209,8 @@ FROM dws_product_payment_1d pay
 WHERE pay.dt = '${do_date}'
 GROUP BY CASE
              WHEN pay.payment_amount_1d <= 1000 THEN '0-1000'
-             WHEN pay.payment_amount_1d > 1000 AND pay.payment_amount_1d <= 5000 THEN '1001-5000'
+             WHEN pay.payment_amount_1d > 1000 AND pay.payment_amount_1d <= 5000
+                 THEN '1001-5000'
              WHEN pay.payment_amount_1d > 5000 AND pay.payment_amount_1d <= 10000 THEN '5001-10000'
              WHEN pay.payment_amount_1d > 10000 AND pay.payment_amount_1d <= 50000 THEN '10001-50000'
              WHEN pay.payment_amount_1d > 50000 THEN '50000+'

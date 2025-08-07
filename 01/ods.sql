@@ -14,10 +14,10 @@ CREATE EXTERNAL TABLE ods_page_log
 ) COMMENT '页面日志表'
     PARTITIONED BY (dt STRING)
     ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.JsonSerDe'
-    LOCATION '/warehouse/电商数仓/ods/ods_page_log/';
+    LOCATION '/warehouse/traffic/ods/ods_page_log/';
 
 -- 生成500条页面日志数据
-INSERT INTO TABLE ods_page_log PARTITION (dt = '2025-08-01')
+INSERT INTO TABLE ods_page_log PARTITION (dt = '2025-08-05')
 SELECT named_struct(
                'ar', case cast(rand() * 10 as int)
                          when 0 then '北京'
@@ -128,10 +128,10 @@ CREATE EXTERNAL TABLE ods_cart_add_inc
 ) COMMENT '购物车添加增量表'
     PARTITIONED BY (dt STRING)
     ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.JsonSerDe'
-    LOCATION '/warehouse/电商数仓/ods/ods_cart_add_inc/';
+    LOCATION '/warehouse/traffic/ods/ods_cart_add_inc/';
 
 -- 生成300条购物车添加数据
-INSERT INTO TABLE ods_cart_add_inc PARTITION (dt = '2025-08-01')
+INSERT INTO TABLE ods_cart_add_inc PARTITION (dt = '2025-08-05')
 SELECT case cast(rand() * 3 as int)
            when 0 then 'insert'
            when 1 then 'update'
@@ -171,15 +171,15 @@ SELECT case cast(rand() * 3 as int)
                                  when 0 then '0'
                                  else '1'
                    end,
-               'create_time', '2025-08-01 00:00:00',
-               'operate_time', from_unixtime(unix_timestamp('2025-08-01 00:00:00') + cast(rand() * 86400 as int)),
+               'create_time', '2025-08-05 00:00:00',
+               'operate_time', from_unixtime(unix_timestamp('2025-08-05 00:00:00') + cast(rand() * 86400 as int)),
                'is_ordered', case cast(rand() * 5 as int)
                                  when 0 then '0'
                                  else '1'
                    end,
                'order_time', case
                                  when cast(rand() * 5 as int) = 0 then null
-                                 else from_unixtime(unix_timestamp('2025-08-01 00:00:00') + cast(rand() * 86400 as int))
+                                 else from_unixtime(unix_timestamp('2025-08-05 00:00:00') + cast(rand() * 86400 as int))
                    end,
                'source_type', case cast(rand() * 5 as int)
                                   when 0 then 'product_detail'
@@ -209,10 +209,10 @@ CREATE EXTERNAL TABLE ods_order_detail_inc
 ) COMMENT '订单明细增量表'
     PARTITIONED BY (dt STRING)
     ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.JsonSerDe'
-    LOCATION '/warehouse/电商数仓/ods/ods_order_detail_inc/';
+    LOCATION '/warehouse/traffic/ods/ods_order_detail_inc/';
 
 -- 生成200条订单明细数据
-INSERT INTO TABLE ods_order_detail_inc PARTITION (dt = '2025-08-01')
+INSERT INTO TABLE ods_order_detail_inc PARTITION (dt = '2025-08-05')
 SELECT case cast(rand() * 3 as int)
            when 0 then 'insert'
            when 1 then 'update'
@@ -247,7 +247,7 @@ SELECT case cast(rand() * 3 as int)
                                else '一加手机'
                    end,
                'sku_num', cast((rand() * 5 + 1) as bigint),
-               'create_time', from_unixtime(unix_timestamp('2025-08-01 00:00:00') + cast(rand() * 86400 as int)),
+               'create_time', from_unixtime(unix_timestamp('2025-08-05 00:00:00') + cast(rand() * 86400 as int)),
                'source_type', case cast(rand() * 5 as int)
                                   when 0 then 'product_detail'
                                   when 1 then 'recommend'
@@ -279,10 +279,10 @@ CREATE EXTERNAL TABLE ods_payment_info_inc
 ) COMMENT '支付信息增量表'
     PARTITIONED BY (dt STRING)
     ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.JsonSerDe'
-    LOCATION '/warehouse/电商数仓/ods/ods_payment_info_inc/';
+    LOCATION '/warehouse/traffic/ods/ods_payment_info_inc/';
 
 -- 生成150条支付信息数据
-INSERT INTO TABLE ods_payment_info_inc PARTITION (dt = '2025-08-01')
+INSERT INTO TABLE ods_payment_info_inc PARTITION (dt = '2025-08-05')
 SELECT case cast(rand() * 3 as int)
            when 0 then 'insert'
            when 1 then 'update'
@@ -309,38 +309,17 @@ SELECT case cast(rand() * 3 as int)
                               when 3 then '订单结算'
                               else '商品结算'
                    end,
-               'payment_time', from_unixtime(unix_timestamp('2025-08-01 00:00:00') + cast(rand() * 86400 as int)),
+               'payment_time', from_unixtime(unix_timestamp('2025-08-05 00:00:00') + cast(rand() * 86400 as int)),
                'callback_content', case cast(rand() * 3 as int)
                                        when 0 then '{"status":"success","message":"支付成功"}'
                                        when 1 then '{"status":"success","message":"交易完成"}'
                                        else '{"status":"pending","message":"处理中"}'
                    end,
-               'callback_time', from_unixtime(unix_timestamp('2025-08-01 00:00:00') + cast(rand() * 86400 as int) +
+               'callback_time', from_unixtime(unix_timestamp('2025-08-05 00:00:00') + cast(rand() * 86400 as int) +
                                               cast(rand() * 3600 as int))
            ) as data
 FROM (SELECT 1) t1
          LATERAL VIEW explode(split(repeat('x', 150), 'x')) t2 as row_col;
--- 创建商品维度全量表
-drop table if exists ods_sku_info_full;
-CREATE EXTERNAL TABLE ods_sku_info_full
-(
-    `id`              STRING COMMENT 'sku_id',
-    `spu_id`          STRING COMMENT 'spu_id',
-    `price`           DECIMAL(16, 2) COMMENT '价格',
-    `sku_name`        STRING COMMENT '商品名称',
-    `sku_desc`        STRING COMMENT '商品描述',
-    `weight`          DECIMAL(16, 2) COMMENT '重量',
-    `tm_id`           STRING COMMENT '品牌id',
-    `category3_id`    STRING COMMENT '三级分类id',
-    `category2_id`    STRING COMMENT '二级分类id',
-    `category1_id`    STRING COMMENT '一级分类id',
-    `sku_default_img` STRING COMMENT '默认图片',
-    `is_sale`         STRING COMMENT '是否在售',
-    `create_time`     STRING COMMENT '创建时间'
-) COMMENT '商品维度表'
-    PARTITIONED BY (dt STRING)
-    ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.JsonSerDe'
-    LOCATION '/warehouse/电商数仓/ods/ods_sku_info_full/';
 
 -- 生成100条商品数据
 
@@ -364,10 +343,10 @@ CREATE EXTERNAL TABLE ods_sku_info_full
 ) COMMENT '商品维度表'
     PARTITIONED BY (dt STRING)
     ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.JsonSerDe'
-    LOCATION '/warehouse/电商数仓/ods/ods_sku_info_full/';
+    LOCATION '/warehouse/traffic/ods/ods_sku_info_full/';
 
 -- 生成100条商品数据
-INSERT INTO TABLE ods_sku_info_full PARTITION (dt = '2025-08-01')
+INSERT INTO TABLE ods_sku_info_full PARTITION (dt = '2025-08-05')
 SELECT concat('SKU', lpad(cast((rand() * 90000 + 10000) as int), 5, '0')) as id,
        concat('SPU', lpad(cast((rand() * 9000 + 1000) as int), 4, '0'))   as spu_id,
        cast(round(rand() * 10000 + 100, 2) as decimal(16, 2))             as price,
@@ -445,6 +424,6 @@ SELECT concat('SKU', lpad(cast((rand() * 90000 + 10000) as int), 5, '0')) as id,
                   else 'oneplus'
                   end, cast(rand() * 100 as int), '.jpg') as sku_default_img,
        '1' as is_sale,
-       '2025-08-01 00:00:00' as create_time
+       '2025-08-05 00:00:00' as create_time
 FROM (SELECT 1) t1
          LATERAL VIEW explode(split(repeat('x', 100), 'x')) t2 as row_col;
