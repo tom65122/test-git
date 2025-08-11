@@ -67,10 +67,12 @@ LOCATION '/warehouse/default/dim/dim_customer_service_full'
 TBLPROPERTIES ('orc.compress' = 'snappy');
 """)
 
+
 customer_service_info = spark.table("ods_customer_service_info").filter(
     (F.col("dt") == "20250801") & (F.col("status").isNotNull())
 ).select("customer_service_id", "customer_service_name", "department", "position",
          "hire_date", "status", "create_time", "update_time")
+
 
 dim_customer_service_df = customer_service_info \
     .withColumn("customer_service_sk", F.monotonically_increasing_id()) \

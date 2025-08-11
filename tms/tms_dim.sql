@@ -292,7 +292,6 @@ select *
 from dim_shift_full;
 
 
-
 drop table if exists dim_truck_driver_full;
 create external table dim_truck_driver_full
 (

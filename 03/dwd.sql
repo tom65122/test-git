@@ -175,6 +175,7 @@ SELECT comment_id,
        item_id,
        sku_id,
        score,
+
        comment_text,
        substr(comment_time, 1, 7) AS dt
 FROM ods_comment_info
