@@ -37,5 +37,7 @@ public class TestSqlServerCDC {
         dataStreamSource.print().setParallelism(1);
 
         env.execute("SQL Server CDC Test");
+
     }
+
 }
