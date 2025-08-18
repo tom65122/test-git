@@ -2,12 +2,7 @@ package common.domain;
 
 import java.io.Serializable;
 
-/**
- * @author han.zhou
- * @time: 2021/10/14 14:09
- * @className: HBaseTable
- * @description HBaseTable
- */
+
 public class HBaseTable implements Serializable {
     private String ethBlock;
     private String ethTranNormalByHash;

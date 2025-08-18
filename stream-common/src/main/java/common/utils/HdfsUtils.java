@@ -16,9 +16,7 @@ import org.apache.flink.streaming.api.functions.sink.filesystem.rollingpolicies.
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
-/**
- * @author han.zhou
- **/
+
 public class HdfsUtils {
 
     public static HdfsInfo buildHdfsInfo(String url, Boolean hdfsNeedPartition, String hdfsPartitionField) {

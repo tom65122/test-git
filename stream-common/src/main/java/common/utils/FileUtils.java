@@ -8,12 +8,6 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Properties;
 
-/**
- * @Package com.stream.common.utils.FileUtils
- * @Author zhou.han
- * @Date 2024/11/20 10:48
- * @description: File Utils
- */
 public class FileUtils {
 
     public static long getFileLastTime(String filePath){

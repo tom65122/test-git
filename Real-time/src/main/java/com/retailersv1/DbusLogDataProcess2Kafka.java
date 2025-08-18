@@ -25,6 +25,8 @@ import org.apache.flink.util.OutputTag;
 import java.util.Date;
 import java.util.HashMap;
 
+import static org.apache.flink.streaming.api.environment.StreamExecutionEnvironment.createRemoteEnvironment;
+
 /**
  * @BelongsProject: test-git
  * @BelongsPackage: com.retailersv1.func
@@ -94,7 +96,7 @@ public class DbusLogDataProcess2Kafka {
                         kafka_botstrap_servers,
                         kafka_topic_base_log_data,
                         new Date().toString(),
-                        OffsetsInitializer.latest()
+                        OffsetsInitializer.earliest()
                 ), WatermarkStrategy.noWatermarks(),
                 "read_kafka_realtime_log"
         );
@@ -114,7 +116,8 @@ public class DbusLogDataProcess2Kafka {
                 .name("convert_json_process");
 
         SideOutputDataStream<String> dirtyDS = processDS.getSideOutput(dirtyTag);
-       processDS.print();
+        processDS.print();
+
 //        dirtyDS.print("dirtyDS -> ");
 
         dirtyDS.sinkTo(KafkaUtils.buildKafkaSink(kafka_botstrap_servers,kafka_dirty_topic))
@@ -220,7 +223,6 @@ public class DbusLogDataProcess2Kafka {
         dataStreamHashMap.get("displayTag").print("displayTag ->");
         dataStreamHashMap.get("actionTag").print("actionTag ->");
         dataStreamHashMap.get("page").print("page ->");
-
 
     }
 }

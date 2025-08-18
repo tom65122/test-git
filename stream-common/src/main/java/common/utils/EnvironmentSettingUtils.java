@@ -11,13 +11,7 @@ import org.apache.hadoop.conf.Configuration;
 
 import java.util.concurrent.TimeUnit;
 
-/**
- * 环境参数设置工具类
- * time: 2021/8/25 11:13 className: EnvironmentSettingUtils.java
- *
- * @author han.zhou
- * @version 1.0.0
- */
+
 public final class EnvironmentSettingUtils {
 
     private static final String HDFS_CHECKPOINT_PATH = ConfigUtils.getString("flink.checkpoint.hdfs.dir");
@@ -30,7 +24,7 @@ public final class EnvironmentSettingUtils {
      * @param env
      */
     public static void defaultParameter(StreamExecutionEnvironment env) {
-//        env.setParallelism(2);
+        env.setParallelism(2);
 
         // 开启 checkpoint 支持在 STREAMING 模式下的 FlinkSink 操作
         env.enableCheckpointing(1000 * 30);

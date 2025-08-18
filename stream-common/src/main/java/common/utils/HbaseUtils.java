@@ -21,12 +21,7 @@ import java.util.concurrent.Executors;
 import static org.apache.hadoop.hbase.CellUtil.cloneQualifier;
 import static org.apache.hadoop.hbase.CellUtil.cloneValue;
 
-/**
- * @author han.zhou
- * @time: 2021/10/14 11:39
- * @className: HBaseUtils
- * @description HBase 工具类
- */
+
 public class HbaseUtils {
     private Connection connection;
     private static final Logger LOG = LoggerFactory.getLogger(HbaseUtils.class.getName());

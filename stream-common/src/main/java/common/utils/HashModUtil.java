@@ -5,10 +5,7 @@ import cn.hutool.crypto.SecureUtil;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author han.zhou
- * @date 2022-01-12 10:06
- **/
+
 public class HashModUtil {
 
     public static String hashMod(Object input, Integer target) {
