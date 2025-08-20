@@ -1,7 +1,11 @@
 package com.retailersv1;
 
-import com.alibaba.fastjson.JSON;
+
+import com.retailersv1.func.MapUpdateHbaseDimTableFunc;
 import com.retailersv1.func.ProcessSplitStreamToKafka;
+import com.stream.utils.CdcSourceUtils;
+import com.ververica.cdc.connectors.mysql.source.MySqlSource;
+import com.ververica.cdc.connectors.mysql.table.StartupOptions;
 import common.utils.ConfigUtils;
 import common.utils.EnvironmentSettingUtils;
 import common.utils.KafkaUtils;
@@ -12,9 +16,7 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import com.alibaba.fastjson.JSONObject;
 import org.apache.flink.api.common.state.MapStateDescriptor;
 import org.apache.flink.streaming.api.datastream.*;
-import org.apache.flink.streaming.api.functions.ProcessFunction;
-import org.apache.flink.util.Collector;
-import org.apache.flink.util.OutputTag;
+
 /**
  * @BelongsProject: test-git
  * @BelongsPackage: com.retailersv1
@@ -24,11 +26,11 @@ import org.apache.flink.util.OutputTag;
  * @Version: 1.0
  */
 public class DbusDwdInteractionComment {
-    private static final String CDH_KAFKA_SERVER = ConfigUtils.getString("kafka.bootstrap.servers");
+
     private static final String CDH_ZOOKEEPER_SERVER = ConfigUtils.getString("zookeeper.server.host.list");
-    private static final String DWD_COMMENT_TOPIC = "dwd_interaction_comment";
-    private static final String SOURCE_TOPIC_DB = "topic_db";
-    private static final String DICT_TOPIC = "dim_dict"; // 假设字典表变更也通过Kafka传递
+    private static final String CDH_KAFKA_SERVER = ConfigUtils.getString("kafka.bootstrap.servers");
+    private static final String CDH_HBASE_NAME_SPACE = ConfigUtils.getString("hbase.namespace");
+    private static final String MYSQL_CDC_TO_KAFKA_TOPIC = ConfigUtils.getString("kafka.cdc.db.topic");
 
     @SneakyThrows
     public static void main(String[] args) {
@@ -36,85 +38,78 @@ public class DbusDwdInteractionComment {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         EnvironmentSettingUtils.defaultParameter(env);
 
-        // 构建Kafka Source读取topic_db数据
-        DataStreamSource<String> topicDbStream = env.fromSource(
-                KafkaUtils.buildKafkaSource(
-                        CDH_KAFKA_SERVER,
-                        SOURCE_TOPIC_DB,
-                        "dwd_interaction_comment_group",
-                        org.apache.flink.connector.kafka.source.enumerator.initializer
-                                .OffsetsInitializer.earliest()
-                ),
-                WatermarkStrategy.noWatermarks(),
-                "kafka_topic_db_source"
+        // 1. 读取MySQL CDC数据源
+        MySqlSource<String> mySQLDbMainCdcSource = CdcSourceUtils.getMySQLCdcSource(
+                ConfigUtils.getString("mysql.database"),
+                "",
+                ConfigUtils.getString("mysql.user"),
+                ConfigUtils.getString("mysql.pwd"),
+                "2800-2988",
+                StartupOptions.initial()
         );
 
-        // 解析JSON数据
-        SingleOutputStreamOperator<JSONObject> jsonParseStream = topicDbStream
-                .process(new ProcessFunction<String, JSONObject>() {
-                    @Override
-                    public void processElement(String value, Context ctx, Collector<JSONObject> out) throws Exception {
-                        try {
-                            JSONObject jsonObject = JSON.parseObject(value);
-                            out.collect(jsonObject);
-                        } catch (Exception e) {
-                            // 错误数据输出到侧输出流
-                            ctx.output(new OutputTag<String>("dirty-data") {}, value);
-                        }
+        // 读取配置库的变化binlog
+        MySqlSource<String> mySQLCdcDimConfSource = CdcSourceUtils.getMySQLCdcSource(
+                ConfigUtils.getString("mysql.databases.conf"),
+                "realtime_v1_config.table_process_dim",
+                ConfigUtils.getString("mysql.user"),
+                ConfigUtils.getString("mysql.pwd"),
+                "3001-4000",
+                StartupOptions.initial()
+        );
+
+        DataStreamSource<String> cdcDbMainStream = env.fromSource(mySQLDbMainCdcSource, WatermarkStrategy.noWatermarks(), "mysql_cdc_main_source");
+        DataStreamSource<String> cdcDbDimStream = env.fromSource(mySQLCdcDimConfSource, WatermarkStrategy.noWatermarks(), "mysql_cdc_dim_source");
+
+        // 2. 处理主业务数据流
+        SingleOutputStreamOperator<JSONObject> cdcDbMainStreamMap = cdcDbMainStream.map(JSONObject::parseObject)
+                .uid("db_data_convert_json")
+                .name("db_data_convert_json")
+                .setParallelism(1);
+
+        cdcDbMainStreamMap.map(JSONObject::toString)
+                .sinkTo(
+                        KafkaUtils.buildKafkaSink(CDH_KAFKA_SERVER, MYSQL_CDC_TO_KAFKA_TOPIC)
+                )
+                .uid("mysql_cdc_to_kafka_topic")
+                .name("mysql_cdc_to_kafka_topic");
+
+        cdcDbMainStreamMap.print("cdcDbMainStreamMap -> ");
+
+        // 3. 处理维度表数据流
+        SingleOutputStreamOperator<JSONObject> cdcDbDimStreamMap = cdcDbDimStream.map(JSONObject::parseObject)
+                .uid("dim_data_convert_json")
+                .name("dim_data_convert_json")
+                .setParallelism(1);
+
+        SingleOutputStreamOperator<JSONObject> cdcDbDimStreamMapCleanColumn = cdcDbDimStreamMap.map(s -> {
+                    s.remove("source");
+                    s.remove("transaction");
+                    JSONObject resJson = new JSONObject();
+                    if ("d".equals(s.getString("op"))) {
+                        resJson.put("before", s.getJSONObject("before"));
+                    } else {
+                        resJson.put("after", s.getJSONObject("after"));
                     }
-                })
-                .uid("parse_json_data")
-                .name("parse_json_data");
+                    resJson.put("op", s.getString("op"));
+                    return resJson;
+                }).uid("clean_json_column_map")
+                .name("clean_json_column_map");
 
-        // 构建字典表变更数据源（如果字典表变更也通过Kafka传递）
-        DataStreamSource<String> dictStream = env.fromSource(
-                KafkaUtils.buildKafkaSource(
-                        CDH_KAFKA_SERVER,
-                        DICT_TOPIC,
-                        "dwd_dict_comment_group",
-                        org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsInitializer.earliest()
-                ),
-                WatermarkStrategy.noWatermarks(),
-                "kafka_dict_source"
-        );
+        SingleOutputStreamOperator<JSONObject> tpDS = cdcDbDimStreamMapCleanColumn.map(new MapUpdateHbaseDimTableFunc(CDH_ZOOKEEPER_SERVER, CDH_HBASE_NAME_SPACE))
+                .uid("map_create_hbase_dim_table")
+                .name("map_create_hbase_dim_table");
 
-        // 解析字典表变更数据
-        SingleOutputStreamOperator<JSONObject> dictJsonStream = dictStream
-                .map(JSON::parseObject)
-                .uid("parse_dict_json")
-                .name("parse_dict_json");
+        // 4. 维度关联
+        MapStateDescriptor<String, JSONObject> mapStageDesc = new MapStateDescriptor<>("mapStageDesc", String.class, JSONObject.class);
+        BroadcastStream<JSONObject> broadcastDs = tpDS.broadcast(mapStageDesc);
+        BroadcastConnectedStream<JSONObject, JSONObject> connectDs = cdcDbMainStreamMap.connect(broadcastDs);
 
-        // 创建广播状态描述符
-        MapStateDescriptor<String, JSONObject> mapStateDesc =
-                new MapStateDescriptor<>("dict-map", String.class, JSONObject.class);
-
-        // 将字典流广播
-        BroadcastStream<JSONObject> broadcastDictStream = dictJsonStream.broadcast(mapStateDesc);
-
-        // 连接主数据流和广播字典流
-        BroadcastConnectedStream<JSONObject, JSONObject> connectedStream =
-                jsonParseStream.connect(broadcastDictStream);
-
-        // 处理连接后的流
-        SingleOutputStreamOperator<String> resultStream = connectedStream
-                .process(new ProcessSplitStreamToKafka(mapStateDesc, CDH_ZOOKEEPER_SERVER))
-                .uid("process_comment_with_dict")
-                .name("process_comment_with_dict");
-
-
-
-
-        // 将结果写入Kafka
-        resultStream
-                .sinkTo(KafkaUtils.buildKafkaSink(CDH_KAFKA_SERVER, DWD_COMMENT_TOPIC))
-                .uid("dwd_comment_to_kafka")
-                .name("dwd_comment_to_kafka");
-
-        // 打印中间结果用于调试
-        jsonParseStream.print("json_parse -> ");
-        resultStream.print("result_data -> ");
+        connectDs.process(new ProcessSplitStreamToKafka(mapStageDesc, CDH_ZOOKEEPER_SERVER));
 
         env.disableOperatorChaining();
-        env.execute("DbusDwdInteractionComment");
+        env.execute();
+
+
     }
 }

@@ -24,6 +24,8 @@ kafka.start.log=start_log
 kafka.display.log=display_log
 kafka.action.log=action_log
 kafka.page.topic=ods_page_log
+kafka.dwd.comment.info=dwd_comment_info
+kafka.dwd.cart.info=dwd_cart_info
 
 # Zookeeper 本地配置
 zookeeper.server.host.list=192.168.142.133:2181
@@ -36,4 +38,4 @@ ali.pwd=
 mysql.databases.conf=realtime_v1_config
 hbase.namespace=realtime
 
-kafka.cdc.db.topic=dim_all_cdc
+kafka.cdc.db.topic=ods_all_cdc

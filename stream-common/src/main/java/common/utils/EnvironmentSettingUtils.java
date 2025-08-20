@@ -25,7 +25,7 @@ public final class EnvironmentSettingUtils {
      */
     public static void defaultParameter(StreamExecutionEnvironment env) {
         env.setParallelism(2);
-
+//        env.getCheckpointConfig().disableCheckpointing();
         // 开启 checkpoint 支持在 STREAMING 模式下的 FlinkSink 操作
         env.enableCheckpointing(1000 * 30);
         // 设置状态后端为 RocksDB

@@ -19,7 +19,7 @@ import java.util.Map;
  * @BelongsPackage: com.retailersv1.func
  * @Author: liwenjie
  * @CreateTime: 2025-08-19  20:21
- * @Description: TODO
+ * @Description: 处理主数据流和维度配置流的关联，并将结果写入Kafka
  * @Version: 1.0
  */
 public class ProcessSplitStreamToKafka extends BroadcastProcessFunction<JSONObject, JSONObject, String> {
@@ -67,7 +67,7 @@ public class ProcessSplitStreamToKafka extends BroadcastProcessFunction<JSONObje
 
             JSONObject after = commentData.getJSONObject("after");
 
-            // 关联字典数据
+            // 关联字典数据 - 获取评价类型名称
             String appraise = after.getString("appraise");
             String appraiseName = dictCache.get("appraise_" + appraise);
 
@@ -78,7 +78,7 @@ public class ProcessSplitStreamToKafka extends BroadcastProcessFunction<JSONObje
             // 添加时间戳
             after.put("ts", commentData.getString("ts"));
 
-            // 输出处理后的数据
+            // 输出处理后的数据到Kafka
             out.collect(after.toJSONString());
         }
     }
