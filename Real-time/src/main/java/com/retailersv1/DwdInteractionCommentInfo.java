@@ -52,7 +52,7 @@ public class DwdInteractionCommentInfo {
                 " info ROW<dic_name STRING>,\n" +
                 " PRIMARY KEY (dic_code) NOT ENFORCED\n" +
                 ")"+ SqlUtil.getHbaseDDL("dim_base_dic"));
-//        tEnv.executeSql("select * from base_dic").print();
+        tEnv.executeSql("select * from base_dic").print();
 
         // 将评论表和字典表进行关联
         Table joinTable = tEnv.sqlQuery("SELECT id,\n" +
@@ -65,7 +65,7 @@ public class DwdInteractionCommentInfo {
                 "FROM comment_info AS c\n" +
                 "  JOIN base_dic FOR SYSTEM_TIME AS OF c.proc_time AS dic\n" +
                 "    ON c.appraise = dic.dic_code");
-//        joinTable.execute().print();
+        joinTable.execute().print();
 
 
         // 将关联后的表数据写入 kafka

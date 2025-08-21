@@ -35,7 +35,7 @@ public class DwdTradeOrderCancelDetail {
                 "  proc_time AS proctime()\n" +
                 ")" + SqlUtil.getKafka(ODS_KAFKA_TOPIC, "dwd_trade_order_cancel_ods_consumer")
         );
-//        tEnv.executeSql("select * from ods_topic_db where `source`['table'] = 'order_detail' ").print();
+        tEnv.executeSql("select * from ods_topic_db where `source`['table'] = 'order_detail' ").print();
 
 
         // 3. 筛选订单明细表数据（主表，insert操作，最细粒度）
@@ -51,7 +51,7 @@ public class DwdTradeOrderCancelDetail {
                 "where `source`['table'] = 'order_detail'\n" +
                 "and `after` is not null"
         );
-//        orderDetail.execute().print();
+        orderDetail.execute().print();
         tEnv.createTemporaryView("order_detail", orderDetail);
 
 
@@ -64,7 +64,7 @@ public class DwdTradeOrderCancelDetail {
                 "  proc_time AS proctime()\n" +
                 ")" + SqlUtil.getKafka(ODS_KAFKA_TOPIC, "dwd_trade_order_cancel_ods_consumer")
         );
-//        tEnv.executeSql("select * from ods_topic_db2 where `source`['table'] = 'order_info' ").print();
+        tEnv.executeSql("select * from ods_topic_db2 where `source`['table'] = 'order_info' ").print();
 
         // 4. 筛选取消订单数据（order_info表，update操作，状态变更为1003）
         Table orderCancel = tEnv.sqlQuery("select\n" +
@@ -80,7 +80,7 @@ public class DwdTradeOrderCancelDetail {
                 "and `after`['order_status'] = '1003'\n" +     // 取消订单状态
                 "and `after` is not null"
         );
-//        orderCancel.execute().print();
+        orderCancel.execute().print();
         tEnv.createTemporaryView("order_cancel", orderCancel);
 
         tEnv.executeSql("CREATE TABLE ods_topic_db3 (\n" +
@@ -92,7 +92,7 @@ public class DwdTradeOrderCancelDetail {
                 "  proc_time AS proctime()\n" +
                 ")" + SqlUtil.getKafka(ODS_KAFKA_TOPIC, "dwd_trade_order_cancel_ods_consumer")
         );
-//        tEnv.executeSql("select * from ods_topic_db3 where `source`['table'] = 'order_detail_activity' ").print();
+        tEnv.executeSql("select * from ods_topic_db3 where `source`['table'] = 'order_detail_activity' ").print();
 
         // 5. 筛选订单明细活动关联表数据（insert操作）
         Table orderDetailActivity = tEnv.sqlQuery("select\n" +
@@ -104,7 +104,7 @@ public class DwdTradeOrderCancelDetail {
                 "where `source`['table'] = 'order_detail_activity'\n" +
                 "and `after` is not null"
         );
-//        orderDetailActivity.execute().print();
+        orderDetailActivity.execute().print();
         tEnv.createTemporaryView("order_detail_activity", orderDetailActivity);
 
         tEnv.executeSql("CREATE TABLE ods_topic_db4 (\n" +
@@ -116,7 +116,7 @@ public class DwdTradeOrderCancelDetail {
                 "  proc_time AS proctime()\n" +
                 ")" + SqlUtil.getKafka(ODS_KAFKA_TOPIC, "dwd_trade_order_cancel_ods_consumer")
         );
-//        tEnv.executeSql("select * from ods_topic_db4 where `source`['table'] = 'order_detail_coupon' ").print();
+        tEnv.executeSql("select * from ods_topic_db4 where `source`['table'] = 'order_detail_coupon' ").print();
 
         // 6. 筛选订单明细优惠券关联表数据（insert操作）
         Table orderDetailCoupon = tEnv.sqlQuery("select\n" +
@@ -127,7 +127,7 @@ public class DwdTradeOrderCancelDetail {
                 "where `source`['table'] = 'order_detail_coupon'\n" +
                 "and `after` is not null"
         );
-//        orderDetailCoupon.execute().print();
+        orderDetailCoupon.execute().print();
         tEnv.createTemporaryView("order_detail_coupon", orderDetailCoupon);
 
         // 7. 关联四张表获得取消订单宽表
@@ -156,7 +156,7 @@ public class DwdTradeOrderCancelDetail {
                 "left join order_detail_coupon odc \n" +
                 "on od.order_id = odc.coupon_order_id and od.detail_id = odc.coupon_detail_id"
         );
-        result.execute().print();
+//        result.execute().print();
 
 
 

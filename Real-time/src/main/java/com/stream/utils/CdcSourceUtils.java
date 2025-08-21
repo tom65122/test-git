@@ -1,8 +1,6 @@
 package com.stream.utils;
 
 
-
-
 import com.ververica.cdc.connectors.mysql.source.MySqlSource;
 import com.ververica.cdc.connectors.mysql.table.StartupOptions;
 import com.ververica.cdc.debezium.JsonDebeziumDeserializationSchema;
@@ -27,7 +25,7 @@ public class CdcSourceUtils {
      * @param model 启动选项（如初始快照、从最新位置开始等）
      * @return 配置好的MySQL CDC数据源对象
      */
-    public static MySqlSource<String> getMySQLCdcSource(String database, String table, String username, String pwd, StartupOptions model,String serverId){
+    public static MySqlSource<String> getMySQLCdcSource(String database, String table, String username, String pwd,  String serverId,StartupOptions model){
 
         // 创建Debezium的配置属性对象（Debezium是CDC的核心组件）
         Properties debeziumProperties = new Properties();

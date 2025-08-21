@@ -115,7 +115,8 @@ public class DwdTradeOrderDetail {
                         "left join order_detail_coupon cou " +
                         "on od.detail_id = cou.coupon_detail_id "
         );
-         joinedTable.execute().print();  // 生产环境建议注释调试打印
+
+//         joinedTable.execute().print();  // 生产环境建议注释调试打印
 
         // 5. 创建Kafka Sink表
         String createSinkSql = "CREATE TABLE dwd_trade_order_detail (\n" +
@@ -138,6 +139,7 @@ public class DwdTradeOrderDetail {
                 "ts BIGINT,\n" +
                 "PRIMARY KEY (id) NOT ENFORCED\n" +
                 ")" + SqlUtil.getUpsertKafkaDDL(DWD_ORDER_DETAIL_TOPIC);
+
         tEnv.executeSql(createSinkSql);
 
         // 6. 写入Kafka

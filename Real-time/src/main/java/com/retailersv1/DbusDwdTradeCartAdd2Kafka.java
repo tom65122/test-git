@@ -48,7 +48,7 @@ public class DbusDwdTradeCartAdd2Kafka {
                 "or\n" +
                 "(`op` = 'u' and `before`['sku_num'] is not null and (cast(`after`['sku_num'] as int) > cast(`before`['sku_num'] as int)) )\n" +
                 ")");
-//        cartInfo.execute().print();
+        cartInfo.execute().print();
 
         tableEnv.executeSql("CREATE TABLE "+DWD_CART_INFO+" (\n" +
                 "      id String,\n" +

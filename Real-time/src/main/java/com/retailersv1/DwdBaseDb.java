@@ -76,8 +76,9 @@ public class DwdBaseDb {
                 "realtime_v1_config.table_process_dwd",
                 ConfigUtils.getString("mysql.user"),
                 ConfigUtils.getString("mysql.pwd"),
-                StartupOptions.initial(),
-                "10000-10050"
+                "10000-10050",
+                StartupOptions.initial()
+
         );
         DataStreamSource<String> cdcDbDwdStream = env.fromSource(mySQLCdcDwdConfSource, WatermarkStrategy.noWatermarks(), "mysql_cdc_dwd_source");
 
