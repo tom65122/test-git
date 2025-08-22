@@ -1,4 +1,5 @@
-package com.retailersv1;
+package com.retailersv1.dwd;
+
 
 import common.utils.ConfigUtils;
 import common.utils.EnvironmentSettingUtils;
@@ -8,15 +9,8 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 
-/**
- * @BelongsProject: test-git
- * @BelongsPackage: com.retailersv1
- * @Author: liwenjie
- * @CreateTime: 2025-08-21  16:45
- * @Description: TODO
- * @Version: 1.0
- */
 public class DbusDwdTradeOrderCancelDetail {
+
     private static final String ODS_KAFKA_TOPIC = ConfigUtils.getString("kafka.cdc.db.topic");
 
     private static final String DWD_TRADE_ORDER_DETAIL = ConfigUtils.getString("kafka.dwd.trade.order.detail");
@@ -33,7 +27,7 @@ public class DbusDwdTradeOrderCancelDetail {
         StreamTableEnvironment tEnv = StreamTableEnvironment.create(env);
 
         // 1. 创建统一的Kafka源表（ODS层）
-        tEnv.executeSql("CREATE TABLE ods_ecommerce_data (\n" +
+        tEnv.executeSql("CREATE TABLE mysql_kafka (\n" +
                 "  `op` STRING,\n" +
                 "  `before` MAP<STRING,STRING>,\n" +
                 "  `after` MAP<STRING,STRING>,\n" +
@@ -60,19 +54,24 @@ public class DbusDwdTradeOrderCancelDetail {
                 "split_activity_amount string," +
                 "split_coupon_amount string," +
                 "split_total_amount string," +
-                "ts bigint " +
+                "ts_ms bigint " +
                 ")" + SqlUtil.getKafka(DWD_TRADE_ORDER_DETAIL,"first"));
+
+//        tEnv.executeSql("select * from dwd_trade_order_detail").print();
 
         // 3. 从统一源表过滤出订单取消数据（order_info表状态变更）
         Table orderCancel = tEnv.sqlQuery("select " +
                 "`after`['id'] id, " +
                 "`after`['operate_time'] operate_time, " +
-                "ts_ms as ts " +
-                "from ods_ecommerce_data " +
+                "ts_ms  " +
+                "from mysql_kafka " +
                 "where `source`['table']='order_info' " +
-                "and `before`['order_status']='1001' " +  // 添加 AND 关键字
+                "and `op` = 'u' " +
+                "and `before`['order_status']='1001' " +
                 "and `after`['order_status']='1003'");
         tEnv.createTemporaryView("order_cancel", orderCancel);
+
+//        orderCancel.execute().print();
 
 
 
@@ -94,14 +93,16 @@ public class DbusDwdTradeOrderCancelDetail {
                 "od.split_activity_amount," +
                 "od.split_coupon_amount," +
                 "od.split_total_amount," +
-                "oc.ts " +
+                "oc.ts_ms " +
                 "from dwd_trade_order_detail od " +
                 "join order_cancel oc " +
                 "on od.order_id=oc.id");
 
+//        result.execute().print();
 
 
-        // 5. 创建目标表并写入数据
+
+   // 5. 创建目标表并写入数据
         tEnv.executeSql("CREATE TABLE " + DWD_TRADE_ORDER_CANCEL_DETAIL + " (\n" +
                 "id string,\n" +
                 "order_id string,\n" +
@@ -119,7 +120,7 @@ public class DbusDwdTradeOrderCancelDetail {
                 "split_activity_amount string,\n" +
                 "split_coupon_amount string,\n" +
                 "split_total_amount string,\n" +
-                "ts bigint,\n" +
+                "ts_ms bigint,\n" +
                 "primary key(id) not enforced\n" +
                 ")" + SqlUtil.getUpsertKafkaDDL(DWD_TRADE_ORDER_CANCEL_DETAIL));
 
