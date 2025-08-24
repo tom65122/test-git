@@ -83,7 +83,8 @@ public class DwsInteractionUserStats {
                         "COALESCE(cts.comment_count, 0) AS comment_count, " +
                         "COALESCE(cts.good_comment_count, 0) AS good_comment_count " +
                         "FROM cart_stats cs " +
-                        "FULL OUTER JOIN comment_stats cts ON cs.user_id = cts.user_id AND cs.date_id = cts.date_id"
+                        "FULL OUTER JOIN comment_stats cts ON cs.user_id = cts.user_id AND cs.date_id = cts.date_id " +
+                        "WHERE COALESCE(cs.date_id, cts.date_id) IS NOT NULL"  // 添加这一行过滤掉date_id为NULL的记录
         );
 //        result.execute().print();
 
