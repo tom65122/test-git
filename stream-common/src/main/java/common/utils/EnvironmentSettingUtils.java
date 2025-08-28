@@ -24,7 +24,9 @@ public final class EnvironmentSettingUtils {
      * @param env
      */
     public static void defaultParameter(StreamExecutionEnvironment env) {
-//        env.setParallelism(1);
+        env.setParallelism(1);
+
+
 //        env.getCheckpointConfig().disableCheckpointing();
         // 开启 checkpoint 支持在 STREAMING 模式下的 FlinkSink 操作
         env.enableCheckpointing(1000 * 30);
