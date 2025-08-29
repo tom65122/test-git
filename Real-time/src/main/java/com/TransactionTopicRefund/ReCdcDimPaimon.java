@@ -22,6 +22,7 @@ public class ReCdcDimPaimon {
     private static final String MYSQL_USER = ConfigUtils.getString("mysql.user");
     private static final String MYSQL_PWD = ConfigUtils.getString("mysql.pwd");
     private static final String PAIMON_WAREHOUSE_PATH = "hdfs://cdh01:8020/refund_data/dwd";
+
     @SneakyThrows
     public static void main(String[] args) {
         System.setProperty("HADOOP_USER_NAME", "root");
@@ -61,7 +62,8 @@ public class ReCdcDimPaimon {
                 "    'password' = '" + MYSQL_PWD + "'," +
                 "    'database-name' = '" + MYSQL_DATABASE + "'," +
                 "    'table-name' = 'ods_order'," +
-                "    'scan.startup.mode' = 'initial'" +
+                "    'scan.startup.mode' = 'initial'," +
+                "    'scan.incremental.snapshot.chunk.key-column' = 'order_id'" +
                 ")");
 
         // 1.2 退款表 ODS
@@ -86,7 +88,8 @@ public class ReCdcDimPaimon {
                 "    'password' = '" + MYSQL_PWD + "'," +
                 "    'database-name' = '" + MYSQL_DATABASE + "'," +
                 "    'table-name' = 'ods_refund'," +
-                "    'scan.startup.mode' = 'initial'" +
+                "    'scan.startup.mode' = 'initial'," +
+                "    'scan.incremental.snapshot.chunk.key-column' = 'refund_id'" +
                 ")");
 
         // 1.3 物流表 ODS
@@ -109,7 +112,8 @@ public class ReCdcDimPaimon {
                 "    'password' = '" + MYSQL_PWD + "'," +
                 "    'database-name' = '" + MYSQL_DATABASE + "'," +
                 "    'table-name' = 'ods_logistics'," +
-                "    'scan.startup.mode' = 'initial'" +
+                "    'scan.startup.mode' = 'initial'," +
+                "    'scan.incremental.snapshot.chunk.key-column' = 'logistics_id'" +
                 ")");
 
         // 1.4 用户行为表 ODS
@@ -132,7 +136,8 @@ public class ReCdcDimPaimon {
                 "    'password' = '" + MYSQL_PWD + "'," +
                 "    'database-name' = '" + MYSQL_DATABASE + "'," +
                 "    'table-name' = 'ods_user_behavior'," +
-                "    'scan.startup.mode' = 'initial'" +
+                "    'scan.startup.mode' = 'initial'," +
+                "    'scan.incremental.snapshot.chunk.key-column' = 'behavior_id'" +
                 ")");
 
         // 1.5 异常数据表 ODS
@@ -153,7 +158,8 @@ public class ReCdcDimPaimon {
                 "    'password' = '" + MYSQL_PWD + "'," +
                 "    'database-name' = '" + MYSQL_DATABASE + "'," +
                 "    'table-name' = 'ods_error_data'," +
-                "    'scan.startup.mode' = 'initial'" +
+                "    'scan.startup.mode' = 'initial'," +
+                "    'scan.incremental.snapshot.chunk.key-column' = 'error_id'" +
                 ")");
 
         // ==================== 2. 切换到 Paimon Catalog 创建目标表 ====================
@@ -270,12 +276,6 @@ public class ReCdcDimPaimon {
         tableEnv.executeSql("INSERT INTO `paimon_cat`.`default`.`ods_error_data_paimon` " +
                 "SELECT * FROM `default_catalog`.`default_database`.`ods_error_data_source`");
 
-        try {
-            // 执行所有作业
-            env.execute("Job-MySQL2Paimon-FiveTables");
-        } catch (Exception e) {
-            System.err.println("作业执行失败: " + e.getMessage());
-            e.printStackTrace();
-        }
+        // 移除原来的 env.execute() 调用，Table API/SQL 操作会自动执行
     }
 }
